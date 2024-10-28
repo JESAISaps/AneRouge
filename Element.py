@@ -1,11 +1,14 @@
 from colorama import Fore
 
+#Typing
+from Case import Case
+
 class Element:
     def __init__(self, color=None) -> None:
         self.presence:set = set()
         self.color:str = color
 
-    def GetPresence(self) -> set:
+    def GetPresence(self) -> set[Case]:
         return self.presence
     
     def AddPresence(self, case):
