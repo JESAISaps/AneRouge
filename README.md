@@ -18,3 +18,4 @@ Les autres heuristiques, qui proposent de liberer la place autour du cube rouge,
 et le but est de s'arranger de maniere detournée pour avancer jusqu'au but.
 Je me demande donc si l'algorithme A* est vraiment la bonne solution pour resoudre ce jeu, en un temps rapide, du au flou dans lequel on est pour la majorité du jeu, et des actions possibles.
 Certe la solution est satisfaisante, mais pas le temps pour la trouver: un brut force, avec un peu de chance, serait meilleur.
+Ah moins de trouver une heuristique miracle, le combinaison lineaire simple d'heuristiques citées precedemment ne semble pas avoir un impact majeur sur la perfomance, si ce n'est que du resusltat, qui passe ici en deuxieme.
