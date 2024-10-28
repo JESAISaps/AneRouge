@@ -7,9 +7,10 @@ from CubeRouge import CubeRouge
 from colorama import Fore
 
 class Map:
-    def __init__(self, taille=(5,4)) -> None:
+    def __init__(self, taille:tuple[int]=(5,4)) -> None:
         self.graph:list[list[Case]] = self.CreateMap(taille) # Utilisé pour stocker les données, peut eventuellement servir a l'UI
         self.InitialiseStartingMap()
+        self.movesDone = []
 
     def CreateMap(self, taille):
         """
@@ -231,10 +232,22 @@ class Map:
                 case.SetContent(None)
                 pieceToMove.RemovePresence(case)
 
+        self.movesDone.append((origin, direction))
+        return True # Si on est arrivé jusque la, c'est qu'on a reussi a bouget la piece
+
+    def GetMovesDone(self):
+        return self.movesDone
+
+    def GetMap(self) -> list[Case]:
+        return self.graph
+    
+    def GetYellowCubes(self):
+        return self.cubeJaunes
+
     def CheckEnd(self):
         endingCases = set([self.graph[i][j] for j in [1,2] for i in [3,4]])
         return self.cubeRouge.GetPresence() == endingCases
-
+    
     def __repr__(self) -> str:
         rep = ""
         for ligne in self.graph:
