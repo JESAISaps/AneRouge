@@ -18,6 +18,9 @@ class AStar:
         self.closedSet = set()
         self.heuristicsFunction = heuristicsFunction
 
+        #pour les affichages periodiques
+        self.compteur = count()
+
     def solve(self):
         """
         Implémente l'algorithme A* pour résoudre le jeu de l'âne rouge.
@@ -28,8 +31,12 @@ class AStar:
         while not self.openQueue.empty():
             currentMap:Map # Purement pour le typing
             gCost:int
-            _, _, (gCost, currentMap) = self.openQueue.get()
-            print(currentMap, self.heuristicsFunction(currentMap))
+            fCost, _, (gCost, currentMap) = self.openQueue.get()
+            if next(self.compteur) % 100 == 0:
+                print(f"\n\nCurrent State: \n{currentMap}")
+                #print(f"Map total cost: {fCost}\nMap heuristic: {self.heuristicsFunction(currentMap)}")
+                print(f"Len of closed set: {len(self.closedSet)}")
+                print(f"Len of open set: {self.openQueue.qsize()}")
 
             # Vérifier l'état de fin
             if currentMap.CheckEnd():
@@ -37,28 +44,39 @@ class AStar:
                 print(currentMap)
                 return currentMap, currentMap.GetMovesDone()
 
-            self.closedSet.add(hash(str(currentMap)))  # Utilisation de hash pour optimiser l'ensemble des états explorés
+            self.closedSet.add(hash(str(currentMap)))  # Utilisation d'un hash pour optimiser l'ensemble des états explorés
+
+            holes = set()
+            for ligne in currentMap.GetMap():
+                for case in ligne:
+                    if case.GetContent() == None:
+                        holes.add(case)
+            
+            toExplore = [case.GetCoo() for case in holes]
 
             # Explorer tous les déplacements possibles
-            for x in range(5):
-                for y in range(4):
-                    for direction in ["north", "south", "east", "west"]:
-                        newMap:Map = self.clone_map(currentMap)
-                        if newMap.MovePiece((x, y), direction):
-                            newGCost = gCost + 1 if isinstance(newMap.GetContentInVertex((x,y)), CubeJaune) or isinstance(newMap.GetContentInVertex((x,y)), CubeRouge) else gCost + 2
-                            heuristic = self.heuristicsFunction(newMap)
-                            newFCost = newGCost + heuristic
+            for holeCoo in toExplore:
+                for x in range(holeCoo[0]-1, holeCoo[0] +2):
+                    for y in range(holeCoo[1]-1, holeCoo[1] +2):
+                            for direction in ["north", "south", "east", "west"]:
+                            
+                            
+                                newMap:Map = self.CloneMap(currentMap)
+                                if x <= 4 and y<= 3 and newMap.MovePiece((x, y), direction):
+                                    stateHash = hash(str(newMap))
+                                    if stateHash not in self.closedSet:
+                                        newGCost = gCost + 1
+                                        heuristic = self.heuristicsFunction(newMap)
+                                        newFCost = newGCost + heuristic
 
-                            stateHash = hash(str(newMap))
-                            if stateHash not in self.closedSet:
-                                self.openQueue.put((newFCost, next(self.unique), (newGCost, newMap)))
-                                self.closedSet.add(stateHash)
+                                        self.openQueue.put((newFCost, next(self.unique), (newGCost, newMap)))
+                                        self.closedSet.add(stateHash)
 
         # Ne devrai jamais arriver, mais on sait jamais
         print("Aucune solution trouvée.")
         return
 
-    def clone_map(self, game_map: Map):
+    def CloneMap(self, game_map: Map):
         """
         Copie l'état actuel de la carte.
         """

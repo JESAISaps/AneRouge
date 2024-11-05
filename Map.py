@@ -246,6 +246,9 @@ class Map:
 
     def CheckEnd(self):
         endingCases = set([self.graph[i][j] for j in [1,2] for i in [3,4]])
+
+        #pour les test
+        #endingCases = set([self.graph[i][j] for j in [1,2] for i in [1,2]])
         return self.cubeRouge.GetPresence() == endingCases
     
     def __repr__(self) -> str:

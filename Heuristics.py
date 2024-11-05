@@ -3,6 +3,8 @@ from Map import Map
 from Case import Case
 from Element import Element
 from CubeJaune import CubeJaune
+from math import sqrt
+from copy import deepcopy
 
 class Heuristics:
     def __init__(self):
@@ -52,15 +54,25 @@ class Heuristics:
         return blocking_cost
     
     def Heuristic_BlockingVertical(self, carte: Map):
+        """
+        returns numbers of blocking peices directly underneath red cube
+        """
         redCube: Element = carte.cubeRouge
         redX, redY = max(redCube.GetPresence(), key=lambda case: case.GetCoo()).GetCoo()
-        blockers = 0
+        if redX == 4:
+            return 0
         
-        for x in range(redX + 1, 5):
-            piece = carte.GetMap()[x][redY]
+        #for x in range(redX + 1, 5):
+        #    piece = carte.GetMap()[x][redY]
+        #    if piece and piece != redCube:
+        #        blockers += 1
+        rep = 0
+        for y in [redY-1, redY]:
+            piece = carte.GetMap()[redX+1][y]
             if piece and piece != redCube:
-                blockers += 1
-        return blockers
+                rep += 1
+
+        return rep
 
     def Heuristic_HorizontalProximity(self, carte: Map):
         """
@@ -104,16 +116,59 @@ class Heuristics:
         maxCase: Case = max(carte.cubeRouge.GetPresence(), key=yCoo)
         return abs(2 - maxCase.GetCoo()[1])
     
+    def Heuristic_MustMove(self, carte:Map):
+        """
+        Heuristique qui verifie si le cube a bougé
+        """
+        cubeRouge = carte.cubeRouge
+        coo = max(cubeRouge.GetPresence(), key=lambda case: sum(case.GetCoo())).GetCoo()
+
+        return 5 - self.distance(coo, (1,2))
+    
+    def Heuristic_LongMonte(self, carte:Map):
+        rectangleLong = carte.rectangleLong
+        return deepcopy(rectangleLong.GetPresence()).pop().GetCoo()[0]-1
+
+    def Heuristic_CloseHoles(self, carte:Map):
+        voids:set[Case] = set()
+        while len(voids) != 2:
+            for ligne in carte.GetMap():
+                for case in ligne:
+                    if case.GetContent() == None:
+                        voids.add(case)
+        return self.distance(voids.pop().GetCoo(), voids.pop().GetCoo()) - 1
+    
+    def Heuristic_CotesOpposes(self, carte:Map):
+        """
+        le carré rouge et vert doivent etre sur des cotes opposes
+        """
+        rouge = carte.cubeRouge
+        vert = carte.rectangleLong
+        _, yRCoo = max(rouge.GetPresence(), key=lambda case: case.GetCoo()[1]).GetCoo()
+        _, yVCoo = max(rouge.GetPresence(), key=lambda case: case.GetCoo()[1]).GetCoo()
+        return 2 - abs(yRCoo - yVCoo)
+
+    
+    def distance(self, p0, p1):
+        return abs((p0[0] - p1[0]) + (p0[1] - p1[1]))
+        return sqrt((p0[0] - p1[0])**2 + (p0[1] - p1[1])**2)
+    
     def GetHeuristics(self, carte: Map):
         """
         Combine les heuristiques pour une évaluation plus fiable.
         """
+        return (3 * self.Heuristic_DistanceToExit(carte) +
+                4 * self.Heuristic_MustMove(carte) +
+                0.75 * self.Heuristic_CloseHoles(carte) +
+                0.5 * self.Heuristic_CotesOpposes(carte) +
+                0.75 * self.Heuristic_LongMonte(carte) + 
+                0.25 * self.Heuristic_YellowInPairs(carte))
         return (100 * self.Heuristic_DistanceToExit(carte) # Critere principal, ne doit jamais augmenter
-                + 1 * self.Heuristic_BlockingPieces(carte)
-                + 1 * self.Heuristic_Blockers(carte)
-                + 0.25 * self.Heuristic_Side(carte)
-                + 0.5 * self.Heuristic_HorizontalProximity(carte)
-                + 1 * self.Heuristic_BlockingVertical(carte)
-                + 1 * self.Heuristic_YellowInPairs(carte)
+                + 0 * self.Heuristic_BlockingPieces(carte)
+                + 0 * self.Heuristic_Blockers(carte)
+                + 0 * self.Heuristic_Side(carte)
+                + 0 * self.Heuristic_HorizontalProximity(carte)
+                + 2 * self.Heuristic_BlockingVertical(carte)
+                + 0 * self.Heuristic_YellowInPairs(carte)
                 )
 
