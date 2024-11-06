@@ -148,7 +148,6 @@ class Heuristics:
 
     def distance(self, p0, p1):
         return abs((p0[0] - p1[0]) + (p0[1] - p1[1]))
-        return sqrt((p0[0] - p1[0])**2 + (p0[1] - p1[1])**2)
     
     def GetHeuristics(self, carte: Map):
         """
@@ -159,13 +158,8 @@ class Heuristics:
                 1 * self.Heuristic_CloseHoles(carte) +
                 0.5 * self.Heuristic_CotesOpposes(carte) +
                 1 * self.Heuristic_LongMonte(carte) + 
-                0.75 * self.Heuristic_YellowInPairs(carte))
-        return (100 * self.Heuristic_DistanceToExit(carte) # Critere principal, ne doit jamais augmenter
-                + 0 * self.Heuristic_BlockingPieces(carte)
-                + 0 * self.Heuristic_Blockers(carte)
-                + 0 * self.Heuristic_Side(carte)
-                + 0 * self.Heuristic_HorizontalProximity(carte)
-                + 2 * self.Heuristic_BlockingVertical(carte)
-                + 0 * self.Heuristic_YellowInPairs(carte)
-                )
+                0.75 * self.Heuristic_YellowInPairs(carte) + 
+
+                1 * self.Heuristic_BlockingVertical(carte) +
+                1 * self.Heuristic_BlockingPieces(carte))
 
