@@ -24,4 +24,4 @@ class Element:
         if self.color != None:
             return self.color + "▮" + Fore.WHITE
         else:
-            return "▮"
+            return " "

@@ -4,6 +4,7 @@ from CubeJaune import CubeJaune
 from RectangleVert import RectangleLong
 from RectangleBleu import RectangleHaut
 from CubeRouge import CubeRouge
+from CubeVide import CubeVide
 from colorama import Fore
 
 class Map:
@@ -72,6 +73,7 @@ class Map:
         self.rectangleLong = RectangleLong(Fore.GREEN)
         self.rectangleHauts = [RectangleHaut(Fore.BLUE) for _ in range(4)]
         self.cubeRouge = CubeRouge(Fore.RED)
+        self.voids = [CubeVide() for _ in range(2)]
 
         # Pose du carré rouge
         for i in [0,1]:
@@ -97,6 +99,9 @@ class Map:
             self.doLink(self.graph[i][3], self.rectangleHauts[2])
         for i in range(2):
             self.doLink(self.graph[i+2][3], self.rectangleHauts[3])
+
+        for i in range(1,3):
+            self.doLink(self.graph[4][i], self.voids[i-1])
         
     def GetContentInVertex(self, coo) -> Element:
         x, y = coo[0], coo[1]
@@ -115,7 +120,7 @@ class Map:
         # Initialisation des variables
         startX, startY = origin
         piece:Element = self.GetContentInVertex((startX, startY))
-        if piece == None:
+        if piece in self.voids:
             return False
 
         # On cherche les cases de la piece dans la direction souhaitée
@@ -160,13 +165,13 @@ class Map:
         #print(f"goodCases : {goodCases}, {[element.GetCoo() for element in goodCases]}")
         match direction:            
             case "north":
-                return not any([ not case.GetNorthNeighbour().GetContent() == None for case in goodCases ]), goodCases, piece
+                return not any([ not case.GetNorthNeighbour().GetContent() in self.voids for case in goodCases ]), goodCases, piece
             case "south":
-                return not any([ not case.GetSouthNeighbour().GetContent() == None for case in goodCases ]), goodCases, piece
+                return not any([ not case.GetSouthNeighbour().GetContent() in self.voids for case in goodCases ]), goodCases, piece
             case "east":
-                return not any([ not case.GetEastNeighbour().GetContent() == None for case in goodCases ]), goodCases, piece
+                return not any([ not case.GetEastNeighbour().GetContent() in self.voids for case in goodCases ]), goodCases, piece
             case "west":                
-                return not any([ not case.GetWestNeighbour().GetContent() == None for case in goodCases ]), goodCases, piece
+                return not any([ not case.GetWestNeighbour().GetContent() in self.voids for case in goodCases ]), goodCases, piece
 
     def MovePiece(self, origin, direction):
         isMoving = self.CheckMovePiece(origin, direction) # Pas tres bonne pratique, is moving peut avoir des types
@@ -194,21 +199,25 @@ class Map:
         match direction:
             case "north":
                 for case in fromWhereToMove: # on rajoute le meme element a la case du dessus
+                    self.voids.remove(case.GetNorthNeighbour().GetContent())
                     case.GetNorthNeighbour().SetContent(pieceToMove)
                     self.doLink(case.GetNorthNeighbour(), pieceToMove)
                     whereHasMoved.add(case.GetNorthNeighbour())
             case "south":
                 for case in fromWhereToMove: # on rajoute le meme element a la case du dessous
+                    self.voids.remove(case.GetSouthNeighbour().GetContent())
                     case.GetSouthNeighbour().SetContent(pieceToMove)
                     self.doLink(case.GetSouthNeighbour(), pieceToMove)
                     whereHasMoved.add(case.GetSouthNeighbour())
             case "east":
                 for case in fromWhereToMove: # on rajoute le meme element a la case de droite
+                    self.voids.remove(case.GetEastNeighbour().GetContent())
                     case.GetEastNeighbour().SetContent(pieceToMove)
                     self.doLink(case.GetEastNeighbour(), pieceToMove)
                     whereHasMoved.add(case.GetEastNeighbour())
             case "west":
                 for case in fromWhereToMove: # on rajoute le meme element a la case de gauche
+                    self.voids.remove(case.GetWestNeighbour().GetContent())
                     case.GetWestNeighbour().SetContent(pieceToMove)
                     self.doLink(case.GetWestNeighbour(), pieceToMove)
                     whereHasMoved.add(case.GetWestNeighbour())
@@ -216,20 +225,32 @@ class Map:
         if isSmall: # Si on a un petit carré
             #print("small")
             oldCase = fromWhereToMove.pop()
-            oldCase.SetContent(None)
+
+            newVoid = CubeVide()
+            self.voids.append(newVoid)
+            self.doLink(oldCase, newVoid)
+
             pieceToMove.RemovePresence(oldCase)
         else:
             #print("not small")
             for case in set.union(set.difference(pieceToMove.GetPresence(), set.union(fromWhereToMove, whereHasMoved)),
                                     toRemove,): # ATTENTION CA NE MARCHE QUE POUR DES BLOCS QUI NE DEPASSENT PAS UNE TAILLE DE 2
-                case.SetContent(None)
+
+                newVoid = CubeVide()
+                self.voids.append(newVoid)
+                self.doLink(case, newVoid)
+
                 pieceToMove.RemovePresence(case)
         # Edge cases if we have a rectangle moving sideway
         if (isinstance(pieceToMove, RectangleHaut) and direction in {"east", "west"}) \
             or (isinstance(pieceToMove, RectangleLong) and direction in {"north", "south"}):
             #print("edge")
             for case in set.difference(oldPresence, whereHasMoved):
-                case.SetContent(None)
+                
+                newVoid = CubeVide()
+                self.voids.append(newVoid)
+                self.doLink(case, newVoid)
+
                 pieceToMove.RemovePresence(case)
 
         self.movesDone.append((origin, direction))
@@ -243,6 +264,9 @@ class Map:
     
     def GetYellowCubes(self):
         return self.cubeJaunes
+
+    def GetVoids(self):
+        return self.voids
 
     def CheckEnd(self):
         endingCases = set([self.graph[i][j] for j in [1,2] for i in [3,4]])

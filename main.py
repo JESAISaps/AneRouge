@@ -5,6 +5,7 @@ from itertools import count
 from CubeJaune import CubeJaune
 from CubeRouge import CubeRouge
 from Heuristics import Heuristics
+from time import time
 
 #For Typing
 from Element import Element
@@ -34,7 +35,7 @@ class AStar:
             fCost, _, (gCost, currentMap) = self.openQueue.get()
             if next(self.compteur) % 100 == 0:
                 print(f"\n\nCurrent State: \n{currentMap}")
-                #print(f"Map total cost: {fCost}\nMap heuristic: {self.heuristicsFunction(currentMap)}")
+                print(f"Map total cost: {fCost}\nMap heuristic: {self.heuristicsFunction(currentMap)}")
                 print(f"Len of closed set: {len(self.closedSet)}")
                 print(f"Len of open set: {self.openQueue.qsize()}")
 
@@ -46,35 +47,30 @@ class AStar:
 
             self.closedSet.add(hash(str(currentMap)))  # Utilisation d'un hash pour optimiser l'ensemble des états explorés
 
-            holes = set()
-            for ligne in currentMap.GetMap():
-                for case in ligne:
-                    if case.GetContent() == None:
-                        holes.add(case)
+            holes:set[Case] = set()
+            for void in currentMap.GetVoids():
+                holes.update(void.GetPresence())
             
             toExplore = [case.GetCoo() for case in holes]
 
             # Explorer tous les déplacements possibles
             for holeCoo in toExplore:
-                for x in range(holeCoo[0]-1, holeCoo[0] +2):
-                    for y in range(holeCoo[1]-1, holeCoo[1] +2):
-                            for direction in ["north", "south", "east", "west"]:
-                            
-                            
-                                newMap:Map = self.CloneMap(currentMap)
-                                if x <= 4 and y<= 3 and newMap.MovePiece((x, y), direction):
-                                    stateHash = hash(str(newMap))
-                                    if stateHash not in self.closedSet:
-                                        newGCost = gCost + 1
-                                        heuristic = self.heuristicsFunction(newMap)
-                                        newFCost = newGCost + heuristic
-
-                                        self.openQueue.put((newFCost, next(self.unique), (newGCost, newMap)))
-                                        self.closedSet.add(stateHash)
+                hX, hY = holeCoo
+                for x , y, direction in [(hX-1, hY, "south"), (hX, hY + 1, "west"), (hX + 1, hY, "north"), (hX, hY - 1, "east")]:
+                    
+                    newMap:Map = self.CloneMap(currentMap)
+                    if 0 <= x <= 4 and 0 <= y <= 3 and newMap.MovePiece((x, y), direction):
+                        stateHash = hash(str(newMap))
+                        if stateHash not in self.closedSet:
+                            newGCost = gCost + 1
+                            heuristic = self.heuristicsFunction(newMap)
+                            newFCost = newGCost + heuristic
+                            self.openQueue.put((newFCost, next(self.unique), (newGCost, newMap)))
+                            self.closedSet.add(stateHash)
 
         # Ne devrai jamais arriver, mais on sait jamais
         print("Aucune solution trouvée.")
-        return
+        return currentMap, False
 
     def CloneMap(self, game_map: Map):
         """
@@ -85,7 +81,9 @@ class AStar:
 if __name__ == "__main__":
     gameMap = Map()
     heuristic = Heuristics()
+    startTime = time()
     finalMap, solution = AStar(gameMap, heuristic.GetHeuristics).solve()
+    stopTime = time()
 
 
     if solution:
@@ -95,4 +93,6 @@ if __name__ == "__main__":
         for action in solution:
             showcaseMap.MovePiece(*action)
             print(showcaseMap)
+
+        print(f"Solution Found in {stopTime - startTime} seconds, in {int(len(solution))} moves.")
 

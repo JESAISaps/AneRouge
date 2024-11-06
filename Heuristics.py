@@ -131,11 +131,8 @@ class Heuristics:
 
     def Heuristic_CloseHoles(self, carte:Map):
         voids:set[Case] = set()
-        while len(voids) != 2:
-            for ligne in carte.GetMap():
-                for case in ligne:
-                    if case.GetContent() == None:
-                        voids.add(case)
+        for void in carte.GetVoids():
+            voids.update(void.GetPresence())
         return self.distance(voids.pop().GetCoo(), voids.pop().GetCoo()) - 1
     
     def Heuristic_CotesOpposes(self, carte:Map):
@@ -145,10 +142,10 @@ class Heuristics:
         rouge = carte.cubeRouge
         vert = carte.rectangleLong
         _, yRCoo = max(rouge.GetPresence(), key=lambda case: case.GetCoo()[1]).GetCoo()
-        _, yVCoo = max(rouge.GetPresence(), key=lambda case: case.GetCoo()[1]).GetCoo()
+        _, yVCoo = max(vert.GetPresence(), key=lambda case: case.GetCoo()[1]).GetCoo()
         return 2 - abs(yRCoo - yVCoo)
 
-    
+
     def distance(self, p0, p1):
         return abs((p0[0] - p1[0]) + (p0[1] - p1[1]))
         return sqrt((p0[0] - p1[0])**2 + (p0[1] - p1[1])**2)
@@ -159,10 +156,10 @@ class Heuristics:
         """
         return (3 * self.Heuristic_DistanceToExit(carte) +
                 4 * self.Heuristic_MustMove(carte) +
-                0.75 * self.Heuristic_CloseHoles(carte) +
+                1 * self.Heuristic_CloseHoles(carte) +
                 0.5 * self.Heuristic_CotesOpposes(carte) +
-                0.75 * self.Heuristic_LongMonte(carte) + 
-                0.25 * self.Heuristic_YellowInPairs(carte))
+                1 * self.Heuristic_LongMonte(carte) + 
+                0.75 * self.Heuristic_YellowInPairs(carte))
         return (100 * self.Heuristic_DistanceToExit(carte) # Critere principal, ne doit jamais augmenter
                 + 0 * self.Heuristic_BlockingPieces(carte)
                 + 0 * self.Heuristic_Blockers(carte)
