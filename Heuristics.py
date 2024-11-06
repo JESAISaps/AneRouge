@@ -160,6 +160,5 @@ class Heuristics:
                 1 * self.Heuristic_LongMonte(carte) + 
                 0.75 * self.Heuristic_YellowInPairs(carte) + 
 
-                1 * self.Heuristic_BlockingVertical(carte) +
-                1 * self.Heuristic_BlockingPieces(carte))
+                1 * self.Heuristic_BlockingVertical(carte))
 

@@ -56,8 +56,7 @@ class AStar:
             # Explorer tous les déplacements possibles
             for holeCoo in toExplore:
                 hX, hY = holeCoo
-                for x , y, direction in [(hX-1, hY, "south"), (hX, hY + 1, "west"), (hX + 1, hY, "north"), (hX, hY - 1, "east")]:
-                    
+                for x , y, direction in [(hX-1, hY, "south"), (hX, hY + 1, "west"), (hX + 1, hY, "north"), (hX, hY - 1, "east")]:                    
                     newMap:Map = self.CloneMap(currentMap)
                     if 0 <= x <= 4 and 0 <= y <= 3 and newMap.MovePiece((x, y), direction):
                         stateHash = hash(str(newMap))
