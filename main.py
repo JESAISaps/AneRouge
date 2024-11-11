@@ -76,9 +76,17 @@ class AStar:
         Copie l'état actuel de la carte.
         """
         return deepcopy(game_map)
+    
+def GenerateDotFile(carte:Map, fichier):
+    fichier.write("strict graph {\n")
+    for ligne in carte.GetMap():
+        for case in ligne:
+            for voisin in [case.GetNorthNeighbour(), case.GetSouthNeighbour(), case.GetEastNeighbour(), case.GetWestNeighbour()]:
+                fichier.write(f'"{case.GetCoo()}" -- "{voisin.GetCoo()}" ;\n') if voisin else True
+    fichier.write("}")
 
-if __name__ == "__main__":
-    gameMap = Map()
+def StartAStar(carte):
+    gameMap = carte
     heuristic = Heuristics()
     startTime = time()
     finalMap, solution = AStar(gameMap, heuristic.GetHeuristics).solve()
@@ -94,4 +102,12 @@ if __name__ == "__main__":
             print(showcaseMap)
 
         print(f"Solution Found in {stopTime - startTime} seconds, in {int(len(solution))} moves.")
+
+if __name__ == "__main__":
+    gameMap = Map()
+    
+    #StartAStar(gameMap)
+    open("dot.dot", "w").close()
+    with open("dot.dot", "a") as dotFile:
+        GenerateDotFile(gameMap, dotFile)
 
